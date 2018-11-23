@@ -1,4 +1,2 @@
-# 忽略数据缓存文件
-[...]
 data/system
 data/session
