@@ -138,8 +138,11 @@ class user extends Controller{
 			$GLOBALS['webRoot'] = '';//从服务器开始到用户目录
 			$GLOBALS['isRoot'] = 0;
 		}
-
-		define('DESKTOP_FOLDER',$this->config['settingSystemDefault']['desktopFolder']);
+		$desktop = $this->config['settingSystem']['desktopFolder'];
+		if(isset($this->config['settingSystemDefault']['desktopFolder'])){
+			$desktop = $this->config['settingSystemDefault']['desktopFolder'];
+		}
+		define('DESKTOP_FOLDER',$desktop);
 		$this->config['user']  = FileCache::load(USER.'data/config.php');
 
 		if(!is_array($this->config['user'])){
@@ -274,6 +277,7 @@ class user extends Controller{
 			'selfShare'		=> systemMember::userShareList($this->user['userID']),
 			'userConfig' 	=> $this->config['user'],
 			'accessToken'	=> access_token_get(),
+			'versionEnv'	=> base64_encode(serverInfo()),
 
 			//虚拟目录
 			'KOD_GROUP_PATH'		=>	KOD_GROUP_PATH,
@@ -307,6 +311,22 @@ class user extends Controller{
 			$lang = '{}';
 		}
 		echo 'LNG='.$lang.';G.useTime='.$useTime.';';
+	}
+	public function appConfig(){
+		$theConfig = array(
+			'lang'          => I18n::getType(),			
+			'isRoot'        => $GLOBALS['isRoot'],
+			'userID'        => $this->user['userID'],
+			'myhome'        => MYHOME,
+			'settings'		=> array(
+				'updloadChunkSize'	=> file_upload_size(),
+				'updloadThreads'	=> $this->config['settings']['updloadThreads'],
+				'uploadCheckChunk'	=> $this->config['settings']['uploadCheckChunk'],
+			),
+			'version'       => KOD_VERSION,
+			// 'userConfig' 	=> $this->config['user'],
+		);
+		show_json($theConfig);
 	}
 
 	/**
@@ -369,7 +389,6 @@ class user extends Controller{
 	 */
 	public function logout(){
 		session_start();
-			setcookie("kodbase",'false', time()+3600*24*100);
 		user_logout();
 	}
 
@@ -425,7 +444,7 @@ class user extends Controller{
 
 		//首次登陆，初始化app 没有最后登录时间
 		$this->_loginSuccess($user);//登陆成功
-		if($user['lastLogin'] == ''){
+		if(!$user['lastLogin']){
 			$app = init_controller('app');
 			$app->initApp($user);
 		}
@@ -438,13 +457,6 @@ class user extends Controller{
 		$_SESSION['X-CSRF-TOKEN'] = rand_string(20);
 		$this->_setCsrfToken();
 		setcookie('kodUserID', $user['userID'], time()+3600*24*100);
-
-		$api_token = "kodadmin";
-		$base_email = base64_encode($user['name']."&".$api_token);
-		$base_password = base64_encode($user['password']."&".$api_token);
-		$login_token = urlencode($base_email.'|'.$base_password);
-		setcookie("kodbase",$login_token, time()+3600*24*100);
-
 		if ($this->in['rememberPassword'] == '1') {
 			setcookie('kodToken',$this->_makeLoginToken($user),time()+3600*24*100);
 		}
@@ -452,6 +464,9 @@ class user extends Controller{
 	}
 	private function _loginDisplay($msg,$success){
 		if(isset($this->in['isAjax'])){
+			if(isset($this->in['getToken']) && $success){
+				show_json(access_token_get(),true);
+			}
 			show_json($msg,$success);
 		}else{
 			if($success){
@@ -581,7 +596,7 @@ class user extends Controller{
 	}
 	public function checkCode() {
 		session_start();//re start
-		$captcha = new MyCaptcha(mt_rand(3,4));
+		$captcha = new MyCaptcha(4);
 		$_SESSION['checkCode'] = $captcha->getString();
 	}
 

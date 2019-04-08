@@ -2,13 +2,13 @@
 <div class="init-loading">
 	<div><img src="<?php echo STATIC_PATH;?>images/common/loading_simple.gif?v=<?php echo KOD_VERSION;?>"/></div>
 </div>
-<div class="topbar aero" data-step="1" data-intro="<p>顶部导航栏</p>网站logo、系统设置、个人中心都在这里。">
+<div class="topbar aero">
 	<div class="content">
 		<button class="btn btn-wap-menu hidden"
 			data-toggle="collapse" data-target="#top-menu-left" 
 		><i class="font-icon icon-reorder"></i></button>
 
-		<div class="top-left collapse" id="top-menu-left" data-step="2" data-intro="点击图标打开文件管理、编辑器和桌面。">
+		<div class="top-left collapse" id="top-menu-left">
 			<?php 
 				$config = $GLOBALS['config'];
 				$html = '<a href="./" class="topbar-menu title">';
@@ -57,7 +57,7 @@
 			</div>
 			<?php } ?>
 		</div>
-		<div class="top-right" data-step="3" data-intro="这里是语言和系统设置。" data-position='left'>
+		<div class="top-right">
 			<?php if(!isset($config['settings']['language'])){ ?>
 			<div class="menu-group">
 				<a id='topbar-language' data-toggle="dropdown" href="#" class="topbar-menu">

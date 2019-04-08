@@ -432,7 +432,13 @@ class explorer extends Controller{
 		if(systemMember::userAuthGroup(1) == false){
 			$publicPath = KOD_GROUP_SHARE.':1/';//不在公共组则只能读取公共组共享目录
 		}
+		$GLOBALS['kodPathAuthCheck'] = true;
 		$listPublic = $this->_path(_DIR($publicPath),$checkFile,true);
+		if($publicPath == KOD_GROUP_PATH.':1/'){
+			if(!path_group_can_read('1')){
+				$listPublic=array("folderList"=>array(),'fileList'=>array());
+			}
+		}
 		$listRoot  = $this->_path(_DIR(MYHOME),$checkFile,true);
 		if ($checkFile) {//编辑器
 			$root = array_merge($listRoot['folderList'],$listRoot['fileList']);
@@ -774,6 +780,7 @@ class explorer extends Controller{
 		if (!path_writeable($this->path)) show_json(LNG('no_permission_write'),false);
 		$success=0;$error=0;$data = array();
 		foreach ($clipboard as $val) {
+			path_can_copy_move($val['path'],$this->in['path']);
 			$pathCopy = _DIR($val['path']);
 			$filename = get_path_this($pathCopy);
 			$autoPath = get_filename_auto($pathPast.$filename,'',$this->config['user']['fileRepeat']);
@@ -804,6 +811,7 @@ class explorer extends Controller{
 		if (!path_writeable($this->path)) show_json(LNG('no_permission_write'),false);
 		$success=0;$error=0;$data = array();
 		foreach ($clipboard as $val) {
+			path_can_copy_move($val['path'],$this->in['path']);
 			$pathCopy = _DIR($val['path']);
 			_DIR($this->in['path']);//重置pathType等数据
 			$filename = get_path_this($pathCopy);
@@ -917,7 +925,7 @@ class explorer extends Controller{
 		file_put_out($this->path,true);
 	}
 	//文件下载后删除,用于文件夹下载
-	public function fileDownloadRemove(){
+	public function fileDownloadRemove(){ 
 		$path = get_path_this(_DIR_CLEAR($this->in['path']));
 		$path = iconv_system(USER_TEMP.$path);
 		$fileName = substr(get_path_this($path),10);//前10个字符为随机前缀
@@ -979,7 +987,7 @@ class explorer extends Controller{
 			$pathThisName=get_path_this(get_path_father($files[0]));
 		}
 		$zipname = $basicPath.$namePre.$pathThisName.'.'.$fileType;
-		$zipname = get_filename_auto($zipname,'',$this->config['user']['fileRepeat']);
+		$zipname = get_filename_auto($zipname,'','rename');//已存在重命名
 
 		if($checkSpaceChange){Hook::trigger("explorer.zipBefore",$zipname);}
 		$result = KodArchive::create($zipname,$files);
@@ -999,6 +1007,9 @@ class explorer extends Controller{
 	public function unzip(){
 		ignore_timeout();
 		$path = $this->path;
+		if(!file_exists($path)){
+			show_json(LNG("not_exists"),false);
+		}
 		$name = get_path_this($path);
 		$name = substr($name,0,strrpos($name,'.'));
 		$ext  = get_path_ext($path);
@@ -1167,6 +1178,11 @@ class explorer extends Controller{
 	//通用预览
 	public function fileView(){
 		Hook::trigger("explorer.fileViewStart",$this->path);
+		if(!isset($this->in['path'])){
+			show_tips('参数错误!');
+		}
+		$this->tpl = TEMPLATE.'api/';
+		$this->display('view.html');
 	}
 	//通用保存
 	public function fileSave(){

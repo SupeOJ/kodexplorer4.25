@@ -10,10 +10,10 @@
 
 	<?php include(TEMPLATE.'common/navbar.html');?>
 	<div class='bodymain drag-upload-box desktop'>
-		<div class="file-continer file-list-icon hidden" data-step="5" data-intro="这里是桌面应用,现在开启应用吧。" data-position='bottom'></div>
+		<div class="file-continer file-list-icon hidden"></div>
 	</div><!-- html5拖拽上传list -->
 
-	<a href="#" class="start" data-step="4" data-intro="个人中心设置在这里。" data-position='right'></a>
+	<a href="#" class="start"></a>
 	<div id="taskbar" style="display:block;" class="">
 		<div class="taskbar-background aero"></div>
 		<div id="desktop"></div>
@@ -49,48 +49,6 @@
 		var desktopApps = <?php echo json_encode($desktopApps);?>;
 		G.thisPath = G.myDesktop;
 		seajs.use("app/src/desktop/main");
-
-		//新用户引导	
-		var newVisitor = isNewVisitor();
-		if(newVisitor === true) {
-			introJs().setOptions({'prevLabel':'&larr; 上一步','nextLabel':'下一步 &rarr;','skipLabel':'跳过','doneLabel':'完成'}).start();
-			// 标记：30天内不在出现新用户引导
-			setCookie("svdnotes-visited","true", 30);
-		}
-
-		function isNewVisitor() {
-		// 从cookie读取“已经向访客提示过消息”的标志位
-			var flg = getCookie("svdnotes-visited");
-			if (flg === "") {return true;} else {return false;}
-		}
-	    // 写字段到cookie
-		function setCookie(cname, cvalue, exdays) {
-			var d = new Date();
-			d.setTime(d.getTime() + (exdays*24*60*60*1000));
-			var expires = "expires="+d.toUTCString();
-			document.cookie = cname + "=" + cvalue + "; " + expires +";path=/";
-		} 
-	    // 读cookie
-		function getCookie(cname) {
-			var name = cname + "=";
-			var ca = document.cookie.split(';');
-			for(var i=0; i<ca.length; i++) {
-				var c = ca[i];
-				while (c.charAt(0)==' ') c = c.substring(1);
-				if (c.indexOf(name) == 0) return c.substring(name.length,c.length);
-			}
-			return "";
-		}
-
-		//检测cookie['kodbase']是否存在，不存在强制退出
-		function login_close(flag){
-			var is_kodbase = document.cookie.indexOf(flag);
-			if(is_kodbase == -1) {
-				jQuery.get('user.php?mod=login&op=logging&action=logout&formhash='+_header.formhash+'&t='+new Date().getTime(),function(data){
-					window.location.reload();
-				});
-			}
-		}
 	</script>
 </body>
 </html>

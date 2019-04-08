@@ -17,25 +17,15 @@ class yzOffice2{
 	public function __construct($plugin,$filePath,$oldVersion=true){
 		$this->plugin = $plugin;
 		$this->filePath = $filePath;
-
-		if($oldVersion){
-			//旧版本;http://dcs.yozosoft.com/examples.html
-			$this->api = array(
-				'upload'	=> 'http://dcs.yozosoft.com/testUpload',
-				'convert'	=> 'http://dcs.yozosoft.com/convert',
-			);
-		}else{
-			//新版本，加入了文件上传2M的限制; http://dcs.yozosoft.com/examples.html
-			$this->api = array(
-				'upload'	=> "http://www.yozodcs.com/testUpload",
-				'convert'	=> "http://www.yozodcs.com/convert",
-			);
-		}
-		
+		//新版本，加入了文件上传2M的限制; http://dcs.yozosoft.com/examples.html
+		$this->api = array(
+			'upload'	=> "http://www.yozodcs.com/testUpload",
+			'convert'	=> "http://www.yozodcs.com/convert",
+		);
 
 		if($filePath === -1) return;
 		if(!$filePath || !file_exists($filePath)){
-			show_json('path '.LNG('error'),false);
+			show_json('path '.LNG('not_exist'),false);
 		}
 
 		$config = $plugin->getConfig();
@@ -48,7 +38,6 @@ class yzOffice2{
 			$this->task = is_array($task_has)?$task_has:false;
 		}
 		//show_json($this->upload(),false);
-		//show_json($this->convert("90ef3480-e446-463e-8372-4438fab0367f\/ios系统体验苹果ppt模板.pptx"));
 	}
 	public function runTask(){
 		$task = array(
@@ -130,7 +119,6 @@ class yzOffice2{
 
 	//非高清预览【返回上传后直接转换过的文件】
 	public function upload(){
-		ignore_timeout();
 		$post = array(
 			"file"			=> "@".$this->filePath,
 			"convertType"	=> $this->convertMode()
@@ -145,13 +133,16 @@ class yzOffice2{
 	public function convert($tempFile=false){
 		$headers = array("Content-Type: application/x-www-form-urlencoded; charset=UTF-8");
 		$tempFile = $tempFile?$tempFile:$this->task['steps'][0]['result']['data'];
+		if(!$tempFile){
+			show_json("操作失败: ".$this->task['steps'][0]['result']['message'],false,$this->task);
+		}
 		$post = array(
 			"inputDir"		=> $tempFile,
 			"convertType"	=> $this->convertMode(),
 			"isAsync"		=> 0,
 		);
-		$post = http_build_query($post);//post默认用array发送;content-type为x-www-form-urlencoded时用key=1&key=2的形式
-		$result = url_request($this->api['convert'],'POST',$post,$headers,false,true,3600);
+		$post   = http_build_query($post);//post默认用array发送;content-type为x-www-form-urlencoded时用key=1&key=2的形式
+		$result = url_request($this->api['convert'],'POST',$post,$headers,false,true,5);
 		if(is_array($result) && is_array($result['data'])){
 			return $result;
 		}
@@ -161,7 +152,6 @@ class yzOffice2{
 	public function clearChche(){
 		del_dir($this->cachePath);
 	}
-
 	public function uploadProcess(){
 		return curl_progress_get($this->filePath,$this->task['taskUuid']);
 	}
@@ -180,4 +170,3 @@ class yzOffice2{
 		}
 	}
 }
-

@@ -110,7 +110,6 @@ class pluginModel{
 		$this->saveData();
 	}
 
-
 	public function getConfigDefault($app){
 		$result = array();
 		$json = $this->getPackageJson($app);
@@ -178,6 +177,9 @@ class pluginModel{
 		$list = $this->loadData();
 		$result = array();
 		foreach ($list as $key => $item) {
+			if(!plugin_check_allow($key)){
+				continue;
+			}
 			unset($item['regiest']);
 			$package = Hook::apply($item['id'].'Plugin.appPackage');
 			if(is_array($package)){

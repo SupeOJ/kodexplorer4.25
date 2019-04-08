@@ -17,6 +17,7 @@ function myAutoloader($name) {
 		SDK_DIR.$name.'.class.php',
 		CORER_DIR.'/Driver/Cache/'.$name.'.class.php',
 		CORER_DIR.'/Driver/DB/'.$name.'.class.php',
+		CORER_DIR.'/IO/'.$name.'.class.php',
 
 		MODEL_DIR.$name.'.class.php',
 		CONTROLLER_DIR.$name.'.class.php',
@@ -87,6 +88,26 @@ function strip($str){
 	return preg_replace('!\s+!', '', $str);
 } 
 
+// 删除字符串两端的字符串
+function str_trim($str,$remove){
+	return str_rtrim(str_ltrim($str,$remove),$remove);
+}
+function str_ltrim($str,$remove){
+	if(!$str || !$remove) return $str;
+	while(substr($str,0,strlen($remove)) == $remove){
+		$str = substr($str,strlen($remove));
+	}
+	return $str;
+}
+function str_rtrim($str,$remove){
+	if(!$str || !$remove) return $str;
+	while(substr($str,-strlen($remove)) == $remove){
+		$str = substr($str,0,-strlen($remove));
+		echo $str;
+	}
+	return $str;
+}
+
 /**
  * 获取精确时间
  */
@@ -148,8 +169,9 @@ function obj2array($obj){
 
 function ignore_timeout(){
 	@ignore_user_abort(true);
-	@set_time_limit(24 * 60 * 60);//set_time_limit(0)  1day
-	@ini_set('memory_limit', '2028M');//2G;
+	@ini_set("max_execution_time",48 * 60 * 60);
+	@set_time_limit(48 * 60 * 60);//set_time_limit(0)  2day
+	@ini_set('memory_limit', '4000M');//4G;
 }
 
 
@@ -268,6 +290,35 @@ function array_sort_by($records, $field, $reverse=false){
 	$reverse = $reverse?SORT_DESC:SORT_ASC;
 	array_multisort(array_column($records,$field),$reverse,$records);
 	return $records;
+}
+
+if (!function_exists('array_column')) {
+    function array_column($array, $column_key, $index_key = null) {
+        $column_key_isNumber = (is_numeric($column_key)) ? true : false;
+        $index_key_isNumber  = (is_numeric($index_key)) ? true : false;
+        $index_key_isNull    = (is_null($index_key)) ? true : false;
+         
+        $result = array();
+        foreach((array)$array as $key=>$val){
+            if($column_key_isNumber){
+                $tmp = array_slice($val, $column_key, 1);
+                $tmp = (is_array($tmp) && !empty($tmp)) ? current($tmp) : null;
+            } else {
+                $tmp = isset($val[$column_key]) ? $val[$column_key] : null;
+            }
+            if(!$index_key_isNull){
+                if($index_key_isNumber){
+                    $key = array_slice($val, $index_key, 1);
+                    $key = (is_array($key) && !empty($key)) ? current($key) : null;
+                    $key = is_null($key) ? 0 : $key;
+                }else{
+                    $key = isset($val[$index_key]) ? $val[$index_key] : 0;
+                }
+            }
+            $result[$key] = $tmp;
+        }
+        return $result;
+    }
 }
 
 /**
@@ -394,7 +445,7 @@ function fatalErrorHandler(){
 	}
 }
 
-function show_tips($message,$url= '', $time = 3,$title = ''){
+function show_tips($message,$url= '', $time = 3,$title = '',$exit = true){
 	ob_get_clean();
 	header('Content-Type: text/html; charset=utf-8');
 	$goto = "content='$time;url=$url'";
@@ -407,6 +458,10 @@ function show_tips($message,$url= '', $time = 3,$title = ''){
 	if($title == ''){
 		$title = "出错了！";
 	}
+	//移动端；报错输出
+	if(isset($_REQUEST['HTTP_X_PLATFORM'])){
+		show_json($message,false);
+	}
 	
 	if(is_array($message) || is_object($message)){
 		$message = json_encode_force($message);
@@ -417,7 +472,7 @@ function show_tips($message,$url= '', $time = 3,$title = ''){
 	}
 	if(file_exists(TEMPLATE.'common/showTips.html')){
 		include(TEMPLATE.'common/showTips.html');
-		exit;
+		if($exit){exit;}
 	}
 	echo<<<END
 <html>
@@ -442,7 +497,7 @@ function show_tips($message,$url= '', $time = 3,$title = ''){
 	</body>
 </html>
 END;
-	exit;
+	if($exit){exit;}
 }
 function get_caller_info() {
 	$trace = debug_backtrace();
@@ -622,6 +677,11 @@ function show_trace(){
 }
 
 function file_sub_str($file,$start=0,$len=0){
+	$size = filesize($file);
+	if($start < 0 ){
+		$start = $size + $start;
+		$len = $size - $start;
+	}
     $fp = fopen($file,'r');
     fseek($fp,$start);
     $res = fread($fp,$len);
@@ -976,4 +1036,4 @@ function pkcs5_unpad($text){
 function pkcs5_pad($text, $block = 8){
 	$pad = $block - (strlen($text) % $block);
 	return $text . str_repeat(chr($pad), $pad);
-} 
+}

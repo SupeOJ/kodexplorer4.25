@@ -14,7 +14,7 @@
     "rootListUser": 0,
     "rootListGroup": 0,
     "csrfProtect": 0,
-    "currentVersion": "4.36",
+    "currentVersion": "4.40",
     "menu": [
         {
             "name": "desktop",

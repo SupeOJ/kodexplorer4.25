@@ -9,7 +9,7 @@
 	<div class="loginbox box-install aero" >
 		<div class="title">
 			<div class="logo"><i class="icon-cloud"></i><?php echo strip_tags(LNG('kod_name'));?></div>
-			<div class='info'>——<?php echo LNG('kod_name_desc');?></div>
+			<div class='info'><?php echo LNG('kod_name_desc');?></div>
 			<div class="menu-group">
 				<a id='footer-language' data-toggle="dropdown" href="javascript:void(0);" class="topbar-menu">
 				<i class='font-icon icon-flag'></i>Language<b class="caret"></b>
@@ -33,7 +33,7 @@
 	            $error = php_env_check();
 	            $login = LNG('login');
 	            if ($error=='') {
-	            	echo '<div class="success"><h4>Successful!</h4>';
+	            	echo '<div class="success">';
 	            }else{
 	            	echo '<div class="error"><h4>error:</h4>'.$error."<br/>";
 	            	$login = LNG('php_env_error_ignore');
